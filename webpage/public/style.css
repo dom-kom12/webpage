@@ -1,0 +1,115 @@
+/* Reset i box model */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Tło i kolor tekstu */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+  line-height: 1.6;
+}
+
+/* Linki */
+a {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: #8ab4f8;
+}
+
+/* Nagłówki */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: bold;
+  margin-bottom: 0.5em;
+  color: #ffffff;
+}
+
+/* Kontener */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #1e1e1e;
+  border-radius: 8px;
+}
+
+/* Przycisk (opcjonalnie) */
+button {
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #3a3a3a;
+  border-color: #666;
+}
+
+.center {
+    margin: center;
+    text-align: center;
+    bottom: 0px;
+}
+
+.progress-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  color: #e0e0e0;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.custom-progress {
+  width: 300px;
+  height: 20px;
+  background-color: #2a2a2a;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00ff99, #00cc66);
+  border-radius: 10px;
+}
+
+.done-text {
+  opacity: 0;
+  transform: translateY(10px);
+  color: #00ff99;
+  font-weight: bold;
+  margin-top: 10px;
+  display: inline-block;
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.done-text.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.content {
+  color: #fff;
+  padding: 20px;
+}

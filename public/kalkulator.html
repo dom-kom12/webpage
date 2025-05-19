@@ -1,0 +1,63 @@
+<div>
+  <h3>Kalkulator</h3>
+  <input type="text" id="calcInput" placeholder="Wpisz wyrażenie, np. 2+2*3" style="width:200px;">
+  <button id="calcBtn">Oblicz</button>
+  <p>Wynik: <span id="calcResult"></span></p>
+</div>
+
+<div>
+  <h3>Konwerter jednostek (długość)</h3>
+  <input type="number" id="lengthInput" placeholder="Wartość" style="width:100px;">
+  <select id="lengthFrom">
+    <option value="m">metry (m)</option>
+    <option value="km">kilometry (km)</option>
+    <option value="cm">centymetry (cm)</option>
+    <option value="mm">milimetry (mm)</option>
+  </select>
+  →
+  <select id="lengthTo">
+    <option value="m">metry (m)</option>
+    <option value="km">kilometry (km)</option>
+    <option value="cm">centymetry (cm)</option>
+    <option value="mm">milimetry (mm)</option>
+  </select>
+  <button id="convertLength">Konwertuj</button>
+  <p>Wynik konwersji: <span id="lengthResult"></span></p>
+</div>
+
+<script>
+// Kalkulator
+document.getElementById('calcBtn').onclick = () => {
+  const expr = document.getElementById('calcInput').value;
+  try {
+    // Uwaga: eval jest niebezpieczne dla kodu produkcyjnego, tutaj tylko demo
+    const result = eval(expr);
+    document.getElementById('calcResult').textContent = result;
+  } catch {
+    document.getElementById('calcResult').textContent = 'Błędne wyrażenie';
+  }
+};
+
+// Konwerter długości
+const lengthUnits = {
+  m: 1,
+  km: 1000,
+  cm: 0.01,
+  mm: 0.001,
+};
+
+document.getElementById('convertLength').onclick = () => {
+  const val = parseFloat(document.getElementById('lengthInput').value);
+  const from = document.getElementById('lengthFrom').value;
+  const to = document.getElementById('lengthTo').value;
+
+  if(isNaN(val)) {
+    document.getElementById('lengthResult').textContent = 'Wpisz poprawną liczbę';
+    return;
+  }
+
+  const meters = val * lengthUnits[from];
+  const converted = meters / lengthUnits[to];
+  document.getElementById('lengthResult').textContent = converted.toFixed(4);
+};
+</script>

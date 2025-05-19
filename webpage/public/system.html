@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Statystyki Servera</title>
+</head>
+<body>
+<div class="center">
+    <h1 id="loading-message">Strona jest wczytywana</h1>
+    <li class="progress-item">
+        <div class="custom-progress">
+            <div class="fill"></div>
+        </div>
+        <span class="done-text">✔ Zrobione!</span>
+    </li>
+</div>
+
+<!-- Ukryta zawartość, pojawi się dopiero po zakończeniu animacji -->
+<div class="content" style="display: none;">
+    <header class="center"><h1>Status Servera</h1></header>
+    <main>
+        <div class="center">
+            <li><p>Status MC <progress></progress> Wczytywanie Informacji</p></li>
+            <li><p>Status WWW <progress></progress> Wczytywanie Informacji</p></li>
+            <li><p>Status Sklepu <progress></progress> Wczytywanie Informacji</p></li>
+            <li><p>Status Supportu <progress></progress> Wczytywanie Informacji</p></li>
+            <li><p>Status Płatności <progress></progress> Wczytywanie Informacji</p></li>
+            <li><p>Status Hostingu Localhost <progress></progress> Wczytywanie Informacji</p></li>
+            <li><p>Status Hostingu TCP serveo.net <progress></progress> Wczytywanie Informacji</p></li>
+            <li><p>Status service-worker.js (offline www) <progress></progress> Wczytywanie Informacji</p></li>
+            <li></li>
+        </div>
+        
+        <div class="center">
+            <h1>Info Servera + Wymagania</h1>
+            <h2>Info O serverze</h2>
+        </div>
+
+        <div class="center">
+            <li><p>Nasz Server Posiada Oryginalny Silnik + Oryginalne Pluginy. Nasz Server Wyróżnia ładny Spawn + Możliwość wyboru trybów za pomocą przycisków</p></li>
+        </div>
+
+        <div class="center">
+            <h2>Wymagania</h2>
+        </div>
+
+        <div class="center">
+            <p>1. Pamięc RAM:</p>
+            <li></li>
+            <p>Minimalne wymagania:</p>
+            <li></li>
+            <p>4 GB RAM na komputerze.</p>
+            <li></li>
+<p>Minecraft, nawet bez modyfikacji, wymaga pamięci RAM, zwłaszcza w trybie multiplayer. Gracze powinni mieć co najmniej 4 GB RAM, aby uniknąć problemów z płynnością, zwłaszcza jeśli serwer jest bardziej rozbudowany (wielu graczy, modów, pluginów).</p>
+<li></li>
+<p>Zalecane:</p>
+<li></li>
+<p>8 GB RAM (lub więcej).</p>
+<li></li>
+<p>Większa ilość pamięci RAM pozwala na komfortową grę, minimalizując problemy z płynnością, szczególnie przy dużych serwerach z wieloma graczami, rozbudowanymi światem i dodatkowymi modyfikacjami. Jeśli gracz chce korzystać z modów, będzie to jeszcze bardziej istotne."</p>
+<li></li>
+<p>2. Procesor (CPU):</p>
+<li></li>
+<p>Minimalny: Intel Core i3 (lub równoważny procesor AMD) z 2 rdzeniami.</p>
+<li></li>
+<p>Zalecany: Intel Core i5 / AMD Ryzen 5 lub wyższy, z co najmniej 4 rdzeniami, aby zapewnić płynne działanie serwera, szczególnie w przypadku większej liczby graczy.</p>    
+<li></li>
+<p>3. Dysk twardy (HDD/SSD):</p>
+<li></li>
+<p>10 GB wolnego miejsca na dysku HDD. BO Minecraft, nawet bez modów, może zajmować dużo miejsca, zwłaszcza przy dużych światach. Wymaga to co najmniej 10 GB wolnego miejsca na dysku. Zaleca się, aby przestrzeń była przeznaczona tylko dla gry i związanych z nią plików.</p>
+<li></li>
+<p>SSD (Solid State Drive). BO SSD zdecydowanie poprawia czas ładowania gry i wczytywanie nowych chunków w trakcie gry. Pomaga to również w ogólnej responsywności systemu, zwłaszcza przy większych światach i modach.</p>   
+<li></li>    
+<p>4. Oprogramowanie</p>
+<li></li>
+<p>Minimalne wymagania:</p>
+<li></li>
+<p>Windows 10/11 64-bit, Linux (Ubuntu 20.04+), macOS (najnowocześniejsza wersja).</p>
+<li></li>
+<p>Minecraft działa najlepiej na 64-bitowych systemach operacyjnych, które umożliwiają wykorzystanie większej ilości pamięci RAM i lepszą kompatybilność z nowszymi wersjami gry.</p>
+<li></li>
+<p>Zalecane: Windows 10/11 64-bit, Ubuntu 20.04+ 64-bit, macOS (najnowsza wersja).</p>
+<li></li>
+<p>Wersja Minecrafta: 1.21 do 1.21.X</p>
+<li></li>
+<p>Java: Java 18 minimum a Zalecane Java 21 Ponieważ Nowsze Wersje Minercrafta Mogą tego wymagać!!</p>
+</div>
+    </main>
+</div>
+
+<script>
+const fill = document.querySelector('.fill');
+const doneText = document.querySelector('.done-text');
+const loadingMessage = document.querySelector('#loading-message'); // Dodano zmienną dla h1
+
+// Funkcja do wyliczenia czasu na podstawie prędkości
+function getAnimationDuration() {
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  let downlink = connection?.downlink || 1; // domyślnie 1 Mbps, jeśli brak danych
+
+  // Obliczanie czasu na podstawie 1 Mbps = 10 sekund
+  let duration = Math.max(5, 10 / downlink); // 10 sekund dla 1 Mbps, im szybsze połączenie, tym krótszy czas
+
+  return duration;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const duration = getAnimationDuration();
+
+  // Ustaw dynamicznie czas trwania animacji
+  fill.style.transition = `width ${duration}s ease-in-out`;
+
+  // Rozpocznij animację
+  setTimeout(() => {
+    fill.style.width = '100%';
+  }, 100); // mały delay żeby CSS zdążył zaktualizować
+
+  // Pokaż tekst po zakończeniu animacji
+  setTimeout(() => {
+    doneText.classList.add('show');
+    document.querySelector('.progress-item').style.display = 'none'; // Zniknij pasek
+    document.querySelector('.content').style.display = 'block'; // Pokaż zawartość
+    loadingMessage.style.display = 'none'; // Ukryj tekst "Strona jest wczytywana"
+  }, duration * 1000);
+});
+</script>
+</body>
+</html>

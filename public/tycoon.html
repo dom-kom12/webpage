@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Idle Clicker</title>
+  <style>
+    body {
+      background: #0d0d0d;
+      color: #00fff7;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      font-size: 3em;
+      margin-bottom: 10px;
+      color: #00ffcc;
+    }
+    .counter {
+      font-size: 2em;
+      margin: 20px 0;
+    }
+    button {
+      padding: 15px 30px;
+      background: #00ffe1;
+      border: none;
+      border-radius: 12px;
+      color: #000;
+      font-size: 1em;
+      margin: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #00b8aa;
+    }
+    .upgrade {
+      margin: 10px;
+      padding: 10px;
+      border: 2px solid #00ffe1;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>💎 Neon Clicker</h1>
+  <h1>NIE ODŚWIERZAJ STRONY stracisz wszystko </h1>
+  <div class="counter">💰 Monety: <span id="coins">0</span></div>
+  <button onclick="clickCoin()">🖱 Kliknij!</button>
+
+  <h2>🔧 Ulepszenia</h2>
+  <div class="upgrade">
+    <div>👷 Pracownik: <span id="workers">0</span> | +1/s</div>
+    <button onclick="buyWorker()">Kup za 50 💰</button>
+  </div>
+  <div class="upgrade">
+    <div>🏭 Fabryka: <span id="factories">0</span> | +10/s</div>
+    <button onclick="buyFactory()">Kup za 500 💰</button>
+  </div>
+  <br>
+  <button onclick="saveGame()">💾 Zapisz grę</button>
+  <button onclick="loadGame()">📂 Wczytaj grę</button>
+  <button onclick="resetGame()">🗑 Nowa gra</button>
+  <button onclick="downloadSave()">⬇️ Pobierz zapis</button>
+  <input type="file" id="fileInput" accept=".json" onchange="importFromFile(event)">
+
+  <script>
+    let state = {
+      coins: 0,
+      workers: 0,
+      factories: 0
+    };
+
+    function clickCoin() {
+      state.coins++;
+      updateUI();
+    }
+
+    function buyWorker() {
+      if (state.coins >= 50) {
+        state.coins -= 50;
+        state.workers++;
+        updateUI();
+      }
+    }
+
+    function buyFactory() {
+      if (state.coins >= 500) {
+        state.coins -= 500;
+        state.factories++;
+        updateUI();
+      }
+    }
+
+    function updateUI() {
+      document.getElementById("coins").textContent = Math.floor(state.coins);
+      document.getElementById("workers").textContent = state.workers;
+      document.getElementById("factories").textContent = state.factories;
+    }
+
+    function loop() {
+      state.coins += state.workers * 1 / 10;
+      state.coins += state.factories * 10 / 10;
+      updateUI();
+    }
+
+    setInterval(loop, 100);
+
+    function saveGame() {
+      localStorage.setItem("idleClickerSave", JSON.stringify(state));
+      alert("Gra zapisana!");
+    }
+
+    function loadGame() {
+      const save = localStorage.getItem("idleClickerSave");
+      if (save) {
+        state = JSON.parse(save);
+        updateUI();
+      } else {
+        alert("Brak zapisu.");
+      }
+    }
+
+    function resetGame() {
+      if (confirm("Na pewno chcesz zacząć od nowa?")) {
+        state = { coins: 0, workers: 0, factories: 0 };
+        updateUI();
+      }
+    }
+
+    function downloadSave() {
+      const blob = new Blob([JSON.stringify(state)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'idleClickerSave.json';
+      a.click();
+    }
+
+    function importFromFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          state = JSON.parse(e.target.result);
+          updateUI();
+        } catch {
+          alert("Nieprawidłowy plik.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>

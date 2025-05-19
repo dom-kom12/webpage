@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LocalCord - czat lokalny</title>
+<style>
+  /* --- Reset i podstawy --- */
+  body, html {
+    margin: 0; padding: 0; height: 100%;
+    background: #36393f;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+    display: flex;
+    overflow: hidden;
+  }
+  #app {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* --- Servers (ikony po lewej) --- */
+  #servers {
+    width: 64px;
+    background: #2f3136;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    overflow-y: auto;
+    user-select: none;
+  }
+  #servers .server {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: #36393f;
+    margin: 4px 0;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 48px;
+    text-align: center;
+    color: #b9bbbe;
+    cursor: pointer;
+    position: relative;
+  }
+  #servers .server.active {
+    background: #5865f2;
+    color: white;
+  }
+  #servers .server:hover {
+    background: #40444b;
+    color: white;
+  }
+  #servers .server .tooltip {
+    position: absolute;
+    left: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #111;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    white-space: nowrap;
+    display: none;
+    z-index: 10;
+  }
+  #servers .server:hover .tooltip {
+    display: block;
+  }
+
+  /* --- Channels (po lewej, obok serwerów) --- */
+  #channels {
+    width: 220px;
+    background: #2f3136;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 12px;
+  }
+  #channels header {
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  #channels header .add-channel {
+    font-weight: 900;
+    font-size: 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+  #channels ul {
+    list-style: none;
+    margin: 0; padding: 0;
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+  #channels ul li {
+    padding: 6px 8px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+  #channels ul li.active, #channels ul li:hover {
+    background: #5865f2;
+  }
+
+  /* --- Chat główny --- */
+  #chat {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: #36393f;
+  }
+  #chat header {
+    height: 48px;
+    background: #2f3136;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+  #messages {
+    flex-grow: 1;
+    padding: 12px;
+    overflow-y: auto;
+    outline: none;
+  }
+  #messages .message {
+    margin-bottom: 12px;
+  }
+  #messages .message .username {
+    font-weight: 700;
+    color: #5865f2;
+  }
+  #messages .message .timestamp {
+    font-size: 10px;
+    color: #72767d;
+    margin-left: 8px;
+  }
+  #messages .message .text {
+    margin-top: 4px;
+    white-space: pre-wrap;
+  }
+
+  /* --- Chat footer (input + emoji + send) --- */
+  #chat-footer {
+    display: flex;
+    padding: 8px 12px;
+    background: #2f3136;
+    align-items: center;
+  }
+  #message-input {
+    flex-grow: 1;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 12px;
+    background: #40444b;
+    color: white;
+    resize: none;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+  }
+  #emoji-btn, #send-btn {
+    background: #5865f2;
+    border: none;
+    color: white;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-left: 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  #send-btn:disabled {
+    background: #7289da88;
+    cursor: default;
+  }
+
+  /* --- Emoji picker --- */
+  #emoji-picker {
+    position: absolute;
+    bottom: 56px;
+    right: 16px;
+    width: 240px;
+    max-height: 200px;
+    background: #2f3136;
+    border-radius: 12px;
+    overflow-y: auto;
+    padding: 8px;
+    display: none;
+    flex-wrap: wrap;
+    user-select: none;
+    z-index: 10;
+  }
+  #emoji-picker span {
+    cursor: pointer;
+    font-size: 20px;
+    padding: 6px;
+    margin: 2px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  #emoji-picker span:hover {
+    background: #5865f2;
+  }
+
+  /* --- User panel po prawej --- */
+  #user-panel {
+    width: 200px;
+    background: #2f3136;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    user-select: none;
+  }
+  #user-panel header {
+    font-weight: 700;
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+  #profile-pic {
+    width: 96px; height: 96px;
+    background: #5865f2;
+    border-radius: 50%;
+    font-size: 48px;
+    color: white;
+    font-weight: 900;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 12px auto;
+    user-select: none;
+  }
+  #user-panel .username {
+    text-align: center;
+    font-weight: 600;
+    font-size: 18px;
+    color: white;
+  }
+  #user-panel .roles {
+    margin: 12px 20px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  #user-panel .role {
+    background: #5865f2;
+    border-radius: 12px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    user-select: none;
+    color: white;
+  }
+  #user-panel button {
+    margin: 16px auto;
+    padding: 10px 18px;
+    background: #5865f2;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: white;
+    user-select: none;
+    width: 80%;
+  }
+  #user-panel button:hover {
+    background: #4752c4;
+  }
+
+  /* Modal (login/register) */
+  #modal-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  #modal {
+    background: #2f3136;
+    padding: 32px 36px;
+    border-radius: 12px;
+    width: 320px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+  }
+  #modal h2 {
+    margin-top: 0;
+    margin-bottom: 24px;
+    color: white;
+    text-align: center;
+  }
+  #modal label {
+    display: block;
+    margin-bottom: 6px;
+    color: #b9bbbe;
+    font-size: 14px;
+  }
+  #modal input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    border: none;
+    background: #40444b;
+    color: white;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  #modal button {
+    width: 100%;
+    background: #5865f2;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+  }
+  #modal button:hover {
+    background: #4752c4;
+  }
+  #modal .switch {
+    margin-top: 16px;
+    font-size: 14px;
+    color: #b9bbbe;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  #modal .switch:hover {
+    color: white;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="servers" title="Serwery">
+    <!-- generowane dynamicznie -->
+  </div>
+
+  <div id="channels">
+    <header>
+      Kanały
+      <span class="add-channel" title="Dodaj kanał">+</span>
+    </header>
+    <ul></ul>
+  </div>
+
+  <div id="chat">
+    <header>#kanał</header>
+    <div id="messages" tabindex="0"></div>
+    <div id="chat-footer">
+      <textarea id="message-input" rows="1" placeholder="Napisz wiadomość..."></textarea>
+      <button id="emoji-btn" title="Wstaw emoji">😊</button>
+      <button id="send-btn" disabled>Wyślij</button>
+    </div>
+    <div id="emoji-picker" aria-label="Wybór emoji"></div>
+  </div>
+
+  <div id="user-panel">
+    <header>Profil</header>
+    <div id="profile-pic"></div>
+    <div class="username"></div>
+    <div class="roles"></div>
+    <button id="logout-btn" title="Wyloguj się">Wyloguj się</button>
+  </div>
+</div>
+
+<!-- Modal logowania/rejestracji -->
+<div id="modal-bg">
+  <div id="modal">
+    <h2>Zaloguj się</h2>
+    <form id="login-form">
+      <label for="username-input">Nazwa użytkownika</label>
+      <input type="text" id="username-input" required maxlength="20" autocomplete="off" />
+      <label for="password-input">Hasło</label>
+      <input type="password" id="password-input" required autocomplete="off" />
+      <button type="submit">Zaloguj się</button>
+    </form>
+    <div class="switch" id="to-register">Nie masz konta? Zarejestruj się</div>
+
+    <form id="register-form" style="display:none; margin-top:16px;">
+      <label for="reg-username-input">Nazwa użytkownika</label>
+      <input type="text" id="reg-username-input" required maxlength="20" autocomplete="off" />
+      <label for="reg-password-input">Hasło</label>
+      <input type="password" id="reg-password-input" required autocomplete="off" />
+      <button type="submit">Zarejestruj się</button>
+    </form>
+    <div class="switch" id="to-login" style="display:none;">Masz konto? Zaloguj się</div>
+  </div>
+</div>
+<script>
+(() => {
+  const STORAGE_KEY = "localcord_data";
+
+  let data = {
+    users: {},
+    currentUser: null,
+    servers: {},
+  };
+
+  // Domyślne dane startowe
+  function getDefaultData() {
+    return {
+      users: {},
+      currentUser: null,
+      servers: {
+        "default": {
+          name: "Domyślny Serwer",
+          channels: {
+            "general": {
+              name: "general",
+              messages: []
+            }
+          }
+        }
+      }
+    };
+  }
+
+  // Zapis do localStorage
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  // Wczytaj dane lub załaduj domyślne
+  function loadData() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        data = JSON.parse(saved);
+      } else {
+        data = getDefaultData();
+        saveData();
+      }
+    } catch {
+      data = getDefaultData();
+      saveData();
+    }
+  }
+
+  // Elementy UI
+  const serversEl = document.getElementById("servers");
+  const channelsEl = document.querySelector("#channels ul");
+  const channelsHeaderEl = document.querySelector("#channels header");
+  const chatHeaderEl = document.querySelector("#chat header");
+  const messagesEl = document.getElementById("messages");
+  const messageInputEl = document.getElementById("message-input");
+  const sendBtn = document.getElementById("send-btn");
+  const emojiBtn = document.getElementById("emoji-btn");
+  const emojiPicker = document.getElementById("emoji-picker");
+  const userPanelUsername = document.querySelector("#user-panel .username");
+  const profilePic = document.getElementById("profile-pic");
+  const logoutBtn = document.getElementById("logout-btn");
+  const modalBg = document.getElementById("modal-bg");
+  const loginForm = document.getElementById("login-form");
+  const registerForm = document.getElementById("register-form");
+  const toRegisterSwitch = document.getElementById("to-register");
+  const toLoginSwitch = document.getElementById("to-login");
+  const regUsernameInput = document.getElementById("reg-username-input");
+  const regPasswordInput = document.getElementById("reg-password-input");
+  const usernameInput = document.getElementById("username-input");
+  const passwordInput = document.getElementById("password-input");
+  const channelsTitle = channelsHeaderEl.childNodes[0];
+
+  let currentServer = "default";
+  let currentChannel = "general";
+
+  // Prosty hash hasła (nie do produkcji, tylko przykład)
+  function hashPassword(pass) {
+    let hash = 0;
+    for (let i = 0; i < pass.length; i++) {
+      hash = (hash << 5) - hash + pass.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash.toString();
+  }
+
+  // Renderuj serwery
+  function renderServers() {
+    serversEl.innerHTML = "";
+    for (const serverId in data.servers) {
+      const server = data.servers[serverId];
+      const div = document.createElement("div");
+      div.className = "server" + (serverId === currentServer ? " active" : "");
+      div.textContent = server.name[0].toUpperCase();
+      div.title = server.name;
+      div.onclick = () => {
+        if (currentServer !== serverId) {
+          currentServer = serverId;
+          // Domyślny kanał na nowym serwerze:
+          const chs = Object.keys(data.servers[currentServer].channels);
+          currentChannel = chs.length ? chs[0] : null;
+          renderAll();
+        }
+      };
+      serversEl.appendChild(div);
+    }
+  }
+
+  // Renderuj kanały dla aktualnego serwera
+  function renderChannels() {
+    channelsEl.innerHTML = "";
+    if (!currentServer || !data.servers[currentServer]) return;
+
+    const server = data.servers[currentServer];
+    channelsTitle.textContent = "Kanały - " + server.name;
+
+    for (const chId in server.channels) {
+      const ch = server.channels[chId];
+      const li = document.createElement("li");
+      li.textContent = ch.name;
+      li.className = chId === currentChannel ? "active" : "";
+      li.onclick = () => {
+        if (currentChannel !== chId) {
+          currentChannel = chId;
+          renderAll();
+        }
+      };
+      channelsEl.appendChild(li);
+    }
+  }
+
+  // Renderuj wiadomości aktualnego kanału
+  function renderMessages() {
+    messagesEl.innerHTML = "";
+    if (!currentServer || !currentChannel) return;
+    const channel = data.servers[currentServer].channels[currentChannel];
+    if (!channel) return;
+
+    channel.messages.forEach(msg => {
+      const div = document.createElement("div");
+      div.className = "message";
+
+      const header = document.createElement("div");
+      header.style.display = "flex";
+      header.style.alignItems = "center";
+
+      const usernameSpan = document.createElement("span");
+      usernameSpan.className = "username";
+      usernameSpan.textContent = msg.username;
+
+      const timeSpan = document.createElement("span");
+      timeSpan.className = "timestamp";
+      timeSpan.textContent = new Date(msg.timestamp).toLocaleTimeString();
+
+      header.appendChild(usernameSpan);
+      header.appendChild(timeSpan);
+
+      const textDiv = document.createElement("div");
+      textDiv.className = "text";
+      textDiv.textContent = msg.text;
+
+      div.appendChild(header);
+      div.appendChild(textDiv);
+
+      messagesEl.appendChild(div);
+    });
+
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  // Renderuj panel użytkownika
+  function renderUserPanel() {
+    if (!data.currentUser) {
+      userPanelUsername.textContent = "Niezalogowany";
+      profilePic.textContent = "?";
+      logoutBtn.style.display = "none";
+    } else {
+      userPanelUsername.textContent = data.currentUser;
+      profilePic.textContent = data.currentUser[0].toUpperCase();
+      logoutBtn.style.display = "block";
+    }
+  }
+
+  // Renderuj nagłówek czatu
+  function renderChatHeader() {
+    if (!currentServer || !currentChannel) {
+      chatHeaderEl.textContent = "#kanał";
+      return;
+    }
+    const channelName = data.servers[currentServer].channels[currentChannel]?.name || "#kanał";
+    chatHeaderEl.textContent = "#" + channelName;
+  }
+
+  // Renderuj wszystko
+  function renderAll() {
+    renderServers();
+    renderChannels();
+    renderChatHeader();
+    renderMessages();
+    renderUserPanel();
+  }
+
+  // Dodaj wiadomość
+  function addMessage(text) {
+    if (!data.currentUser || !text.trim()) return;
+    const msg = {
+      username: data.currentUser,
+      text: text.trim(),
+      timestamp: Date.now(),
+    };
+    const channel = data.servers[currentServer].channels[currentChannel];
+    channel.messages.push(msg);
+    saveData();
+    renderMessages();
+  }
+
+  // Obsługa wpisu w textarea
+  messageInputEl.addEventListener("input", () => {
+    sendBtn.disabled = !messageInputEl.value.trim();
+  });
+
+  // Wyślij wiadomość po kliknięciu przycisku
+  sendBtn.addEventListener("click", () => {
+    if (!messageInputEl.value.trim()) return;
+    addMessage(messageInputEl.value);
+    messageInputEl.value = "";
+    sendBtn.disabled = true;
+  });
+
+  // Wyślij wiadomość po naciśnięciu Enter (bez Shift)
+  messageInputEl.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) {
+        sendBtn.click();
+      }
+    }
+  });
+
+  // Emoji picker - przykładowe emoji
+  const emojis = ["😊","😂","😍","👍","🎉","😢","😎","🤔","🙌","🔥","💯","❤️"];
+  emojis.forEach(e => {
+    const span = document.createElement("span");
+    span.textContent = e;
+    span.onclick = () => {
+      messageInputEl.value += e;
+      messageInputEl.focus();
+      sendBtn.disabled = !messageInputEl.value.trim();
+      emojiPicker.style.display = "none";
+    };
+    emojiPicker.appendChild(span);
+  });
+
+  emojiBtn.addEventListener("click", () => {
+    emojiPicker.style.display = emojiPicker.style.display === "flex" ? "none" : "flex";
+  });
+
+  // Kliknięcie poza emoji picker zamyka go
+  document.addEventListener("click", e => {
+    if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+      emojiPicker.style.display = "none";
+    }
+  });
+
+  // --- Logowanie i rejestracja ---
+
+  function showModal() {
+    modalBg.style.display = "flex";
+    loginForm.style.display = "block";
+    registerForm.style.display = "none";
+  }
+
+  function hideModal() {
+    modalBg.style.display = "none";
+    loginForm.style.display = "none";
+    registerForm.style.display = "none";
+  }
+
+  toRegisterSwitch.addEventListener("click", (e) => {
+    e.preventDefault();
+    loginForm.style.display = "none";
+    registerForm.style.display = "block";
+  });
+
+  toLoginSwitch.addEventListener("click", (e) => {
+    e.preventDefault();
+    registerForm.style.display = "none";
+    loginForm.style.display = "block";
+  });
+
+  modalBg.addEventListener("click", e => {
+    if (e.target === modalBg) {
+      hideModal();
+    }
+  });
+
+  // Rejestracja użytkownika
+  registerForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const username = regUsernameInput.value.trim();
+    const password = regPasswordInput.value.trim();
+
+    if (!username || !password) {
+      alert("Wypełnij wszystkie pola");
+      return;
+    }
+    if (data.users[username]) {
+      alert("Użytkownik już istnieje");
+      return;
+    }
+
+    data.users[username] = {
+      passwordHash: hashPassword(password),
+    };
+    data.currentUser = username;
+    saveData();
+    hideModal();
+    renderAll();
+  });
+
+  // Logowanie użytkownika
+  loginForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username || !password) {
+      alert("Wypełnij wszystkie pola");
+      return;
+    }
+    const user = data.users[username];
+    if (!user || user.passwordHash !== hashPassword(password)) {
+      alert("Nieprawidłowy login lub hasło");
+      return;
+    }
+    data.currentUser = username;
+    saveData();
+    hideModal();
+    renderAll();
+  });
+
+  logoutBtn.addEventListener("click", () => {
+    data.currentUser = null;
+    saveData();
+    renderAll();
+  });
+
+  // Inicjalizacja
+  loadData();
+
+  // Jeśli nie zalogowany, pokaż modal logowania
+  if (!data.currentUser) {
+    showModal();
+  } else {
+    renderAll();
+  }
+})();
+</script>
+
+</body>
+</html>

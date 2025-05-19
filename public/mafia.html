@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mafia Game</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    h1 { margin-top: 20px; }
+    #lobby, #game { display: none; }
+    .player-list { margin-top: 10px; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Mafia Multiplayer</h1>
+
+  <div id="menu">
+    <input type="text" id="playerName" placeholder="Your name" /> <br />
+    <button onclick="createLobby()">Create Lobby</button>
+    <input type="text" id="joinCode" placeholder="Lobby ID" />
+    <button onclick="joinLobby()">Join Lobby</button>
+  </div>
+
+  <div id="lobby">
+    <h2>Lobby: <span id="lobbyId"></span></h2>
+    <p>Players:</p>
+    <div class="player-list" id="players"></div>
+  </div>
+
+  <div id="game">
+    <h2>Game Started</h2>
+    <p>Your role: <strong id="roleDisplay"></strong></p>
+    <p>Phase: <span id="phaseDisplay">-</span></p>
+    <div id="roleActions"></div>
+  </div>
+
+  <script>
+    const ws = new WebSocket(`ws://${location.host}`);
+    let playerName = "";
+    let currentLobby = "";
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+
+      if (msg.type === "lobby_created") {
+        currentLobby = msg.lobbyId;
+        document.getElementById("lobbyId").textContent = currentLobby;
+        document.getElementById("menu").style.display = "none";
+        document.getElementById("lobby").style.display = "block";
+      }
+
+      if (msg.type === "update_players") {
+        const players = msg.players.map(p => `<div>${p}</div>`).join("");
+        document.getElementById("players").innerHTML = players;
+      }
+
+      if (msg.type === "your_role") {
+        document.getElementById("roleDisplay").textContent = msg.role;
+        document.getElementById("lobby").style.display = "none";
+        document.getElementById("game").style.display = "block";
+      }
+
+      if (msg.type === "phase") {
+        document.getElementById("phaseDisplay").textContent = msg.phase;
+        showRoleActions(msg.phase);
+      }
+    };
+
+    function createLobby() {
+      playerName = document.getElementById("playerName").value.trim();
+      if (!playerName) return alert("Enter your name");
+      ws.send(JSON.stringify({ type: "create_lobby" }));
+    }
+
+    function joinLobby() {
+      playerName = document.getElementById("playerName").value.trim();
+      const joinCode = document.getElementById("joinCode").value.trim();
+      if (!playerName || !joinCode) return alert("Enter name and code");
+      currentLobby = joinCode;
+      ws.send(JSON.stringify({ type: "join_lobby", name: playerName, lobbyId: joinCode }));
+      document.getElementById("lobbyId").textContent = joinCode;
+      document.getElementById("menu").style.display = "none";
+      document.getElementById("lobby").style.display = "block";
+    }
+
+    function showRoleActions(phase) {
+      const role = document.getElementById("roleDisplay").textContent;
+      const actions = document.getElementById("roleActions");
+      actions.innerHTML = "";
+
+      if (phase === "night") {
+        if (role === "mafia") {
+          actions.innerHTML = `<p>Select player to eliminate (type name): <input id='mafiaTarget' /><button onclick='sendAction()'>Kill</button></p>`;
+        } else if (role === "agent") {
+          actions.innerHTML = `<p>Check player role (type name): <input id='agentTarget' /><button onclick='sendAction()'>Check</button></p>`;
+        } else if (role === "doctor") {
+          actions.innerHTML = `<p>Heal player (type name): <input id='healTarget' /><button onclick='sendAction()'>Heal</button></p>`;
+        }
+      }
+    }
+
+    function sendAction() {
+      const role = document.getElementById("roleDisplay").textContent;
+      let target = "";
+      if (role === "mafia") target = document.getElementById("mafiaTarget").value;
+      if (role === "agent") target = document.getElementById("agentTarget").value;
+      if (role === "doctor") target = document.getElementById("healTarget").value;
+      ws.send(JSON.stringify({ type: "action", target }));
+    }
+  </script>
+</body>
+</html>

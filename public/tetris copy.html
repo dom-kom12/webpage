@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tetris z przełącznikiem stylu</title>
+<style>
+  :root {
+    --block-size: 30px;
+    --cols: 10;
+    --rows: 15;
+  }
+
+  body {
+    margin: 0;
+    background-color: #111;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    font-family: 'Courier New', monospace;
+    user-select: none;
+  }
+
+  h1 {
+    margin: 20px;
+  }
+
+  #styleToggle {
+    margin-bottom: 10px;
+    padding: 8px 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  /* Plansza */
+  #tetris {
+    position: relative;
+    width: calc(var(--block-size) * var(--cols));
+    height: calc(var(--block-size) * var(--rows));
+    background-color: #222;
+    border: 3px solid #444;
+    box-sizing: content-box;
+  }
+
+  .row {
+    display: flex;
+  }
+
+  .cell {
+    width: var(--block-size);
+    height: var(--block-size);
+    box-sizing: border-box;
+    border: 1px solid #333;
+  }
+
+  /* Neon Style */
+  body.neon {
+    background-color: #0d0d0d;
+    color: #0ff;
+  }
+
+  body.neon #tetris {
+    background-color: #111;
+    border-color: #0ff;
+    box-shadow: 0 0 15px #0ff;
+  }
+
+  body.neon .cell {
+    border-color: #0ff;
+    background-color: #001a1a;
+    box-shadow: inset 0 0 5px #0ff;
+    transition: background-color 0.3s, box-shadow 0.3s;
+  }
+
+  body.neon .cell.filled {
+    background-color: #0ff;
+    box-shadow:
+      0 0 10px #0ff,
+      inset 0 0 10px #0ff;
+  }
+
+  /* Retro Style */
+  body.retro {
+    background-color: #f0f0e0;
+    color: #222;
+  }
+
+  body.retro #tetris {
+    background-color: #c0c0a0;
+    border-color: #888;
+    box-shadow: none;
+  }
+
+  body.retro .cell {
+    border: 1px solid #999;
+    background-color: #d0d0b0;
+    box-shadow: none;
+    transition: none;
+  }
+
+  body.retro .cell.filled {
+    background-color: #555;
+    box-shadow: none;
+  }
+
+  /* Styl klocków różne kolory */
+  .color-1.filled { background-color: #ff0000; }
+  .color-2.filled { background-color: #00ff00; }
+  .color-3.filled { background-color: #0000ff; }
+  .color-4.filled { background-color: #ffff00; }
+  .color-5.filled { background-color: #00ffff; }
+  .color-6.filled { background-color: #ff00ff; }
+  .color-7.filled { background-color: #ffa500; }
+
+  body.neon .color-1.filled { background-color: #ff0040; box-shadow: 0 0 10px #ff0040, inset 0 0 15px #ff0040; }
+  body.neon .color-2.filled { background-color: #00ff7f; box-shadow: 0 0 10px #00ff7f, inset 0 0 15px #00ff7f; }
+  body.neon .color-3.filled { background-color: #007fff; box-shadow: 0 0 10px #007fff, inset 0 0 15px #007fff; }
+  body.neon .color-4.filled { background-color: #ffff40; box-shadow: 0 0 10px #ffff40, inset 0 0 15px #ffff40; }
+  body.neon .color-5.filled { background-color: #40ffff; box-shadow: 0 0 10px #40ffff, inset 0 0 15px #40ffff; }
+  body.neon .color-6.filled { background-color: #ff40ff; box-shadow: 0 0 10px #ff40ff, inset 0 0 15px #ff40ff; }
+  body.neon .color-7.filled { background-color: #ffb840; box-shadow: 0 0 10px #ffb840, inset 0 0 15px #ffb840; }
+
+  /* Info i score */
+  #info {
+    margin-top: 10px;
+    font-size: 20px;
+  }
+
+</style>
+</head>
+<body class="neon">
+
+<h1>Tetris - Styl: <span id="currentStyle">Neonowy</span></h1>
+<button id="styleToggle">Przełącz na styl Retro</button>
+
+<div id="tetris"></div>
+<div id="info">Wynik: <span id="score">0</span></div>
+
+<script>
+(() => {
+  const COLS = 10;
+  const ROWS = 15;
+  const BLOCK_SIZE = 30;
+
+  // Klocki Tetrisa (7 typów)
+  const SHAPES = [
+    [], // brak (indeks 0 nieużywany)
+    [[1,1,1,1]],                // I
+    [[1,1],[1,1]],              // O
+    [[0,1,0],[1,1,1]],          // T
+    [[1,0,0],[1,1,1]],          // L
+    [[0,0,1],[1,1,1]],          // J
+    [[1,1,0],[0,1,1]],          // S
+    [[0,1,1],[1,1,0]]           // Z
+  ];
+
+  const COLORS = [null,1,2,3,4,5,6,7];
+
+  let board = [];
+  let currentPiece = null;
+  let currentX = 0;
+  let currentY = 0;
+  let currentRotation = 0;
+  let score = 0;
+  let gameOver = false;
+
+  const tetrisDiv = document.getElementById('tetris');
+  const scoreSpan = document.getElementById('score');
+  const currentStyleSpan = document.getElementById('currentStyle');
+  const styleToggleBtn = document.getElementById('styleToggle');
+
+  // Utwórz planszę w DOM
+  const cells = [];
+
+  function createBoard() {
+    tetrisDiv.innerHTML = '';
+    for(let r=0; r<ROWS; r++) {
+      const row = [];
+      const rowDiv = document.createElement('div');
+      rowDiv.classList.add('row');
+      for(let c=0; c<COLS; c++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        rowDiv.appendChild(cell);
+        row.push(cell);
+      }
+      tetrisDiv.appendChild(rowDiv);
+      cells.push(row);
+    }
+  }
+
+  // Obliczanie kształtu po rotacji
+  function rotate(shape, rotation) {
+    let matrix = shape;
+    for(let i=0; i<rotation; i++) {
+      matrix = matrix[0].map((val, index) => shape.map(row => row[index]).reverse());
+      shape = matrix;
+    }
+    return matrix;
+  }
+
+  // Sprawdź czy klocka da się położyć
+  function canPlace(shape, x, y) {
+    for(let r=0; r<shape.length; r++) {
+      for(let c=0; c<shape[r].length; c++) {
+        if(shape[r][c]) {
+          let boardX = x + c;
+          let boardY = y + r;
+          if(boardX < 0 || boardX >= COLS || boardY >= ROWS) return false;
+          if(boardY >= 0 && board[boardY][boardX]) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // Połóż klocek na planszy
+  function placePiece() {
+    let shape = rotate(SHAPES[currentPiece], currentRotation);
+    for(let r=0; r<shape.length; r++) {
+      for(let c=0; c<shape[r].length; c++) {
+        if(shape[r][c]) {
+          let boardX = currentX + c;
+          let boardY = currentY + r;
+          if(boardY >= 0 && boardY < ROWS && boardX >=0 && boardX < COLS) {
+            board[boardY][boardX] = COLORS[currentPiece];
+          }
+        }
+      }
+    }
+  }
+
+  // Usuń pełne linie i zwiększ wynik
+  function clearLines() {
+    let linesCleared = 0;
+    for(let r=ROWS-1; r>=0; r--) {
+      if(board[r].every(cell => cell !== 0)) {
+        board.splice(r,1);
+        board.unshift(new Array(COLS).fill(0));
+        linesCleared++;
+        r++; // Sprawdź nową linie na miejscu tej usuniętej
+      }
+    }
+    if(linesCleared > 0) {
+      score += linesCleared * 100;
+      scoreSpan.textContent = score;
+    }
+  }
+
+  // Stwórz nowy klocek
+  function newPiece() {
+    currentPiece = Math.floor(Math.random() * 7) + 1;
+    currentX = Math.floor(COLS / 2) - 1;
+    currentY = -2;
+    currentRotation = 0;
+    if(!canPlace(rotate(SHAPES[currentPiece], currentRotation), currentX, currentY)) {
+      gameOver = true;
+      alert('Koniec gry! Wynik: ' + score);
+      clearInterval(gameInterval);
+    }
+  }
+
+  // Wyrenderuj planszę i klocek
+  function draw() {
+    for(let r=0; r<ROWS; r++) {
+      for(let c=0; c<COLS; c++) {
+        const val = board[r][c];
+        const cell = cells[r][c];
+        cell.className = 'cell';
+        if(val) {
+          cell.classList.add('filled');
+          cell.classList.add('color-' + val);
+        }
+      }
+    }
+
+    // Rysuj aktualny klocek
+    let shape = rotate(SHAPES[currentPiece], currentRotation);
+    for(let r=0; r<shape.length; r++) {
+      for(let c=0; c<shape[r].length; c++) {
+        if(shape[r][c]) {
+          let x = currentX + c;
+          let y = currentY + r;
+          if(y >= 0 && y < ROWS && x >= 0 && x < COLS) {
+            let cell = cells[y][x];
+            cell.classList.add('filled');
+            cell.classList.add('color-' + COLORS[currentPiece]);
+          }
+        }
+      }
+    }
+  }
+
+  // Przesuń klocek w dół
+  function moveDown() {
+    if(canPlace(rotate(SHAPES[currentPiece], currentRotation), currentX, currentY+1)) {
+      currentY++;
+    } else {
+      placePiece();
+      clearLines();
+      newPiece();
+    }
+    draw();
+  }
+
+  // Obsługa klawiszy
+  function keyDownHandler(e) {
+    if(gameOver) return;
+
+    switch(e.key) {
+      case "ArrowLeft":
+        if(canPlace(rotate(SHAPES[currentPiece], currentRotation), currentX-1, currentY)) currentX--;
+        break;
+      case "ArrowRight":
+        if(canPlace(rotate(SHAPES[currentPiece], currentRotation), currentX+1, currentY)) currentX++;
+        break;
+      case "ArrowDown":
+        moveDown();
+        break;
+      case "ArrowUp":
+        let nextRotation = (currentRotation + 1) % 4;
+        if(canPlace(rotate(SHAPES[currentPiece], nextRotation), currentX, currentY)) currentRotation = nextRotation;
+        break;
+      case " ":
+        // Hard drop
+        while(canPlace(rotate(SHAPES[currentPiece], currentRotation), currentX, currentY+1)) {
+          currentY++;
+        }
+        moveDown();
+        break;
+    }
+    draw();
+  }
+
+  // Przełączanie stylu
+  styleToggleBtn.addEventListener('click', () => {
+    if(document.body.classList.contains('neon')) {
+      document.body.classList.remove('neon');
+      document.body.classList.add('retro');
+      currentStyleSpan.textContent = 'Retro';
+      styleToggleBtn.textContent = 'Przełącz na styl Neonowy';
+    } else {
+      document.body.classList.remove('retro');
+      document.body.classList.add('neon');
+      currentStyleSpan.textContent = 'Neonowy';
+      styleToggleBtn.textContent = 'Przełącz na styl Retro';
+    }
+  });
+
+  // Inicjalizacja planszy i gry
+  function init() {
+    board = [];
+    for(let r=0; r<ROWS; r++) {
+      board.push(new Array(COLS).fill(0));
+    }
+    createBoard();
+    newPiece();
+    draw();
+  }
+
+  init();
+
+  let gameInterval = setInterval(() => {
+    if(!gameOver) moveDown();
+  }, 300);
+
+  window.addEventListener('keydown', keyDownHandler);
+
+})();
+</script>
+
+</body>
+</html>

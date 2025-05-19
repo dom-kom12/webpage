@@ -1,0 +1,48 @@
+<div>
+  <h3>Skracacz linków</h3>
+  <input type="text" id="longUrl" placeholder="Wpisz długi URL" style="width:300px;">
+  <button id="shortenBtn">Skróć</button>
+  <p>Twój skrócony link: <a href="#" id="shortUrl" target="_blank"></a></p>
+</div>
+
+<script>
+const baseUrl = window.location.origin + '/s/';
+const urlMap = {}; // lokalnie, na stronie - reset po odświeżeniu
+
+function randomString(length=5) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for(let i=0; i<length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+document.getElementById('shortenBtn').onclick = () => {
+  const longUrl = document.getElementById('longUrl').value.trim();
+  if(!longUrl) return alert('Wpisz URL');
+  
+  // Generuj unikalny klucz
+  let key;
+  do {
+    key = randomString();
+  } while(urlMap[key]);
+  
+  urlMap[key] = longUrl;
+  
+  const shortUrl = baseUrl + key;
+  const a = document.getElementById('shortUrl');
+  a.href = longUrl;
+  a.textContent = shortUrl;
+};
+
+// Obsługa przekierowania (tylko lokalnie, trzeba zaimplementować backend do pełnej wersji)
+if(window.location.pathname.startsWith('/s/')) {
+  const key = window.location.pathname.split('/s/')[1];
+  if(urlMap[key]) {
+    window.location.href = urlMap[key];
+  } else {
+    alert('Link nie istnieje lub wygasł');
+  }
+}
+</script>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kółko i krzyżyk Neon</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+
+  body {
+    background-color: #0f0f1a;
+    color: #0ff;
+    font-family: 'Orbitron', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    user-select: none;
+  }
+
+  h1 {
+    text-shadow:
+      0 0 5px #0ff,
+      0 0 10px #0ff,
+      0 0 20px #00ffff,
+      0 0 40px #00ffff;
+    margin-bottom: 20px;
+  }
+
+  #board {
+    display: grid;
+    grid-template-columns: repeat(3, 120px);
+    grid-template-rows: repeat(3, 120px);
+    gap: 15px;
+  }
+
+  .cell {
+    background: #111122;
+    border: 3px solid #0ff;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    color: #0ff;
+    cursor: pointer;
+    transition: box-shadow 0.3s ease;
+    box-shadow:
+      0 0 5px #0ff,
+      inset 0 0 10px #00ffff;
+  }
+
+  .cell:hover {
+    box-shadow:
+      0 0 15px #0ff,
+      inset 0 0 20px #00ffff;
+  }
+
+  .cell.x {
+    color: #ff0080;
+    text-shadow:
+      0 0 10px #ff0080,
+      0 0 20px #ff0080;
+  }
+
+  .cell.o {
+    color: #00ffff;
+    text-shadow:
+      0 0 10px #00ffff,
+      0 0 20px #00ffff;
+  }
+
+  #status {
+    margin-top: 30px;
+    font-size: 1.5rem;
+    min-height: 2rem;
+    text-align: center;
+    color: #0ff;
+    text-shadow:
+      0 0 5px #0ff,
+      0 0 10px #0ff;
+  }
+
+  #resetBtn {
+    margin-top: 20px;
+    background: #111122;
+    border: 2px solid #0ff;
+    border-radius: 12px;
+    color: #0ff;
+    padding: 10px 25px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow:
+      0 0 10px #0ff;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  #resetBtn:hover {
+    background: #00ffff;
+    color: #111122;
+    box-shadow:
+      0 0 20px #00ffff;
+  }
+</style>
+</head>
+<body>
+  <h1>Kółko i krzyżyk Neon</h1>
+  <div id="board">
+    <div class="cell" data-cell></div>
+    <div class="cell" data-cell></div>
+    <div class="cell" data-cell></div>
+    <div class="cell" data-cell></div>
+    <div class="cell" data-cell></div>
+    <div class="cell" data-cell></div>
+    <div class="cell" data-cell></div>
+    <div class="cell" data-cell></div>
+    <div class="cell" data-cell></div>
+  </div>
+  <div id="status"></div>
+  <button id="resetBtn">Resetuj grę</button>
+
+<script>
+  const X_CLASS = 'x';
+  const O_CLASS = 'o';
+  let oTurn = false;
+  const cells = document.querySelectorAll('[data-cell]');
+  const board = document.getElementById('board');
+  const status = document.getElementById('status');
+  const resetBtn = document.getElementById('resetBtn');
+
+  const WINNING_COMBINATIONS = [
+    [0,1,2],
+    [3,4,5],
+    [6,7,8],
+    [0,3,6],
+    [1,4,7],
+    [2,5,8],
+    [0,4,8],
+    [2,4,6]
+  ];
+
+  startGame();
+
+  resetBtn.addEventListener('click', startGame);
+
+  function startGame() {
+    oTurn = false;
+    cells.forEach(cell => {
+      cell.classList.remove(X_CLASS);
+      cell.classList.remove(O_CLASS);
+      cell.textContent = '';
+      cell.removeEventListener('click', handleClick);
+      cell.addEventListener('click', handleClick, {once: true});
+    });
+    setStatus(`Ruch gracza: ${oTurn ? 'O' : 'X'}`);
+  }
+
+  function handleClick(e) {
+    const cell = e.target;
+    const currentClass = oTurn ? O_CLASS : X_CLASS;
+    placeMark(cell, currentClass);
+    if (checkWin(currentClass)) {
+      endGame(false);
+    } else if (isDraw()) {
+      endGame(true);
+    } else {
+      swapTurns();
+      setStatus(`Ruch gracza: ${oTurn ? 'O' : 'X'}`);
+    }
+  }
+
+  function placeMark(cell, currentClass) {
+    cell.classList.add(currentClass);
+    cell.textContent = currentClass.toUpperCase();
+  }
+
+  function swapTurns() {
+    oTurn = !oTurn;
+  }
+
+  function checkWin(currentClass) {
+    return WINNING_COMBINATIONS.some(combination => {
+      return combination.every(index => {
+        return cells[index].classList.contains(currentClass);
+      });
+    });
+  }
+
+  function isDraw() {
+    return [...cells].every(cell => {
+      return cell.classList.contains(X_CLASS) || cell.classList.contains(O_CLASS);
+    });
+  }
+
+  function endGame(draw) {
+    if (draw) {
+      setStatus('Remis! 🎉');
+    } else {
+      setStatus(`Wygrał gracz: ${oTurn ? 'O' : 'X'}! 🏆`);
+    }
+    cells.forEach(cell => {
+      cell.removeEventListener('click', handleClick);
+    });
+  }
+
+  function setStatus(message) {
+    status.textContent = message;
+  }
+</script>
+</body>
+</html>

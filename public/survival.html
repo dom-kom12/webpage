@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌲 Survival Game</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #0a0a0a;
+      color: #00ff99;
+      padding: 20px;
+    }
+    h1 {
+      color: #00ffcc;
+    }
+    button {
+      padding: 10px;
+      margin: 5px;
+      background: #00ffcc;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #00ccaa;
+    }
+    .stat {
+      margin: 8px 0;
+    }
+    .menu, .game {
+      display: none;
+    }
+    .visible {
+      display: block;
+    }
+    .crafted {
+      color: #ffaa00;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌲 Survival Text Game</h1>
+  <div id="menu" class="menu visible">
+    <button onclick="newGame()">Nowa Gra</button>
+    <button onclick="loadGame()">Wczytaj z LocalStorage</button>
+    <input type="file" id="fileInput" accept=".json" onchange="importFromFile(event)">
+  </div>
+
+  <div id="game" class="game">
+    <div class="stat">❤️ Zdrowie: <span id="health">100</span></div>
+    <div class="stat">🍞 Jedzenie: <span id="food">100</span></div>
+    <div class="stat">🔨 Drewno: <span id="wood">0</span></div>
+    <div class="stat">🛡️ Schronienie: <span id="shelter">Nie</span></div>
+    <div class="stat">🔥 Ognisko: <span id="fire">Nie</span></div>
+    <div class="stat">🕒 Dzień: <span id="day">1</span></div>
+    <button onclick="gatherWood()">🌲 Zbieraj drewno</button>
+    <button onclick="hunt()">🐗 Poluj</button>
+    <button onclick="rest()">🛌 Odpocznij</button>
+    <button onclick="craft('shelter')">🏠 Zbuduj schronienie (30 drewna)</button>
+    <button onclick="craft('fire')">🔥 Rozpal ognisko (15 drewna)</button>
+    <button onclick="saveGame()">💾 Zapisz</button>
+    <button onclick="downloadSave()">⬇️ Pobierz zapis</button>
+    <button onclick="returnToMenu()">🔙 Menu</button>
+  </div>
+
+  <script>
+    let game = {
+      health: 100,
+      food: 100,
+      wood: 0,
+      day: 1,
+      shelter: false,
+      fire: false
+    };
+
+    function updateUI() {
+      document.getElementById('health').textContent = game.health;
+      document.getElementById('food').textContent = game.food;
+      document.getElementById('wood').textContent = game.wood;
+      document.getElementById('day').textContent = game.day;
+      document.getElementById('shelter').textContent = game.shelter ? 'Tak' : 'Nie';
+      document.getElementById('fire').textContent = game.fire ? 'Tak' : 'Nie';
+    }
+
+    function newGame() {
+      game = { health: 100, food: 100, wood: 0, day: 1, shelter: false, fire: false };
+      showGame();
+      updateUI();
+    }
+
+    function gatherWood() {
+      const foodCost = 10;
+      if (game.food >= foodCost) {
+        game.food -= foodCost;
+        const woodGain = Math.floor(Math.random() * 10) + 1;
+        game.wood += woodGain;
+        nextDay();
+      } else alert("Za mało jedzenia by zbierać drewno!");
+      updateUI();
+    }
+
+    function hunt() {
+      const success = Math.random() > 0.3;
+      if (success) {
+        const foodFound = Math.floor(Math.random() * 20) + 10;
+        game.food += foodFound;
+      } else {
+        let damage = Math.floor(Math.random() * 15) + 5;
+        if (game.shelter) damage = Math.floor(damage * 0.5);
+        game.health -= damage;
+        alert("Polowanie nieudane, otrzymano obrażenia: " + damage);
+      }
+      nextDay();
+      updateUI();
+    }
+
+    function rest() {
+      let heal = 10;
+      if (game.fire) heal += 5;
+      game.health += heal;
+      game.food -= 5;
+      if (game.health > 100) game.health = 100;
+      nextDay();
+      updateUI();
+    }
+
+    function craft(item) {
+      if (item === 'shelter' && !game.shelter && game.wood >= 30) {
+        game.wood -= 30;
+        game.shelter = true;
+        alert("Zbudowano schronienie!");
+      } else if (item === 'fire' && !game.fire && game.wood >= 15) {
+        game.wood -= 15;
+        game.fire = true;
+        alert("Rozpalono ognisko!");
+      } else {
+        alert("Nie możesz tego zrobić.");
+      }
+      updateUI();
+    }
+
+    function nextDay() {
+      game.day++;
+      game.food -= 5;
+      if (game.food < 0) game.food = 0;
+      if (game.food === 0) {
+        let hungerDamage = 10;
+        if (game.shelter) hungerDamage = 5;
+        game.health -= hungerDamage;
+        alert("Głodujesz! Tracisz zdrowie.");
+      }
+      if (game.health <= 0) {
+        alert("Zmarłeś! Gra zakończona.");
+        returnToMenu();
+      }
+    }
+
+    function showGame() {
+      document.getElementById('menu').classList.remove('visible');
+      document.getElementById('game').classList.add('visible');
+    }
+
+    function returnToMenu() {
+      document.getElementById('game').classList.remove('visible');
+      document.getElementById('menu').classList.add('visible');
+    }
+
+    function saveGame() {
+      localStorage.setItem('survivalSave', JSON.stringify(game));
+      alert("Gra zapisana w LocalStorage!");
+    }
+
+    function loadGame() {
+      const save = localStorage.getItem('survivalSave');
+      if (save) {
+        game = JSON.parse(save);
+        showGame();
+        updateUI();
+      } else {
+        alert("Brak zapisu.");
+      }
+    }
+
+    function downloadSave() {
+      const blob = new Blob([JSON.stringify(game)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'survival_save.json';
+      a.click();
+    }
+
+    function importFromFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          game = JSON.parse(e.target.result);
+          showGame();
+          updateUI();
+        } catch {
+          alert("Nieprawidłowy plik zapisu!");
+        }
+      };
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+</html>

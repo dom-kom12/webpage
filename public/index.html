@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+    <script>
+      console.warn('[Info]: Dla Programisty: Strona Działa Poprawnie')
+      console.log('[Info]: Dla Programisty: Strona Działa Poprawnie')
+      console.error('[Info]: Dla Programisty: Strona Działa Poprawnie')
+    </script>
+    <title>Strona Główna</title>
+</head>
+<body>
+    <header class="center">
+        <h1>Strona Glówna</h1>
+        <h2>Podstrony</h2>
+    </header>
+
+    <div class="center">
+        <main>
+            <h2><strong>Podstrony tej strony</strong></h2>
+            <a href="opcje.html"><button><progress><strong></button></progress></a>
+            <h2><strong>Inne Nasze Strony</strong></h2>
+            <a href="inne.html"><button><progress><strong></strong></button></progress></a>
+            <a href="opcje1.html">funkcje strony</a>
+          </main>
+    </div>
+    <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker zarejestrowany!'))
+        .catch(err => console.log('Błąd rejestracji SW:', err));
+    } else {
+      console.log('Service Worker nie jest wspierany przez tę przeglądarkę.');
+    }
+      window.location.href = "#";
+    </script>
+    <footer class="center"><p>© Strona Zabezpieczona Przed Kopiowaniem - Strona Glówna - ©2025R</p></footer>
+</body>
+</html>

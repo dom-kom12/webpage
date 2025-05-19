@@ -1,0 +1,47 @@
+<div style="background:#000; color:#0f0; font-family: monospace; padding:10px; height:300px; overflow-y:auto;" id="terminal">
+  <div>> Witaj w trybie terminala. Wpisz 'help' aby zobaczyć komendy.</div>
+</div>
+<input type="text" id="termInput" style="width:100%; background:#111; color:#0f0; border:none; font-family: monospace;" autofocus placeholder="Wpisz komendę i wciśnij Enter">
+
+<script>
+const term = document.getElementById('terminal');
+const input = document.getElementById('termInput');
+
+const commands = {
+  help: 'Dostępne komendy: help, echo, clear, weather, calc',
+  echo: (args) => args.join(' '),
+  clear: () => { term.innerHTML = ''; return null; },
+  weather: () => 'Użyj przycisku do sprawdzania pogody na stronie.',
+  calc: (args) => {
+    try {
+      return eval(args.join(' '));
+    } catch {
+      return 'Błędne wyrażenie.';
+    }
+  }
+};
+
+function printLine(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  term.appendChild(div);
+  term.scrollTop = term.scrollHeight;
+}
+
+input.addEventListener('keydown', e => {
+  if(e.key === 'Enter') {
+    const line = input.value.trim();
+    if(!line) return;
+    printLine('> ' + line);
+    
+    const [cmd, ...args] = line.split(' ');
+    if(commands[cmd]) {
+      const result = commands[cmd](args);
+      if(result !== null) printLine(result);
+    } else {
+      printLine('Nieznana komenda. Wpisz "help" aby zobaczyć listę komend.');
+    }
+    input.value = '';
+  }
+});
+</script>

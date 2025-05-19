@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<title>Battle Royale 2D Multiplayer</title>
+<style>
+  body { margin: 0; overflow: hidden; background: #222; }
+  #gameCanvas {
+    background: linear-gradient(45deg, #0f0f0f, #222);
+    display: block;
+    margin: 0 auto;
+    border: 2px solid #0f0;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="800"></canvas>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const playerSize = 20;
+  let players = {};
+  let myId = null;
+
+  let keys = {};
+  let player = { x: 100, y: 100 };
+
+  const speed = 4;
+  const MAP_SIZE = 800;
+
+  window.addEventListener('keydown', (e) => { keys[e.key] = true; });
+  window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+  socket.on('currentPlayers', (serverPlayers) => {
+    players = serverPlayers;
+    myId = socket.id;
+    if(players[myId]) {
+      player = players[myId];
+    }
+  });
+
+  socket.on('newPlayer', (newPlayer) => {
+    players[newPlayer.id] = newPlayer;
+  });
+
+  socket.on('playerMoved', (movedPlayer) => {
+    players[movedPlayer.id] = movedPlayer;
+  });
+
+  socket.on('playerDisconnected', (id) => {
+    delete players[id];
+  });
+
+  function update() {
+    if(!myId) return;
+
+    let moved = false;
+
+    if(keys['w'] || keys['ArrowUp']) {
+      player.y -= speed;
+      moved = true;
+    }
+    if(keys['s'] || keys['ArrowDown']) {
+      player.y += speed;
+      moved = true;
+    }
+    if(keys['a'] || keys['ArrowLeft']) {
+      player.x -= speed;
+      moved = true;
+    }
+    if(keys['d'] || keys['ArrowRight']) {
+      player.x += speed;
+      moved = true;
+    }
+
+    // Granice mapy
+    player.x = Math.max(0, Math.min(MAP_SIZE, player.x));
+    player.y = Math.max(0, Math.min(MAP_SIZE, player.y));
+
+    if(moved) {
+      // Aktualizuj u siebie
+      players[myId].x = player.x;
+      players[myId].y = player.y;
+      // Wysyłaj do serwera
+      socket.emit('playerMovement', { x: player.x, y: player.y });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Rysuj mapę (prosta siatka)
+    ctx.strokeStyle = '#0f0';
+    for(let i=0; i<=MAP_SIZE; i+=40) {
+      ctx.beginPath();
+      ctx.moveTo(i,0);
+      ctx.lineTo(i,MAP_SIZE);
+      ctx.moveTo(0,i);
+      ctx.lineTo(MAP_SIZE,i);
+      ctx.stroke();
+    }
+
+    // Rysuj graczy
+    for(let id in players) {
+      const p = players[id];
+      ctx.fillStyle = (id === myId) ? '#0f0' : '#f00';
+      ctx.fillRect(p.x - playerSize/2, p.y - playerSize/2, playerSize, playerSize);
+    }
+  }
+
+  function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+  }
+
+  gameLoop();
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<title>Gra Multiplayer 2D z Lobby</title>
+<style>
+  body {
+    background: #111; color: #eee; font-family: monospace; margin: 0; padding: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  }
+  canvas {
+    background: #222;
+    border: 3px solid #0ff;
+    image-rendering: pixelated;
+  }
+  #chat {
+    width: 640px;
+    max-height: 150px;
+    overflow-y: auto;
+    background: #000a;
+    margin-top: 8px;
+    padding: 8px;
+    font-size: 14px;
+  }
+  #inputChat {
+    width: 640px;
+    padding: 6px;
+    font-family: monospace;
+    font-size: 14px;
+    border: none;
+    outline: none;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="game" width="640" height="480"></canvas>
+
+<div id="chat"></div>
+<input type="text" id="inputChat" placeholder="Napisz wiadomość i wciśnij Enter..." />
+
+<script>
+  async function main(){
+    // Najpierw pobierz lobby dla nowego gracza
+    const res = await fetch('/join');
+    const data = await res.json();
+    const lobbyIndex = data.lobby;
+    console.log('Dołączasz do lobby:', lobbyIndex);
+
+    // Połącz się z odpowiednim namespace Socket.IO
+    const socket = io('/lobby'+lobbyIndex);
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const TILE_SIZE = 32;
+    let map = [];
+    let players = {};
+
+    function drawMap() {
+      for(let y=0; y<map.length; y++) {
+        for(let x=0; x<map[y].length; x++) {
+          ctx.fillStyle = map[y][x] === 1 ? '#060' : '#444';
+          ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+      }
+    }
+
+    function drawPlayers() {
+      for(let id in players) {
+        const p = players[id];
+        ctx.fillStyle = (id === socket.id) ? '#0ff' : '#f00';
+        ctx.beginPath();
+        ctx.arc(p.x * TILE_SIZE + TILE_SIZE/2, p.y * TILE_SIZE + TILE_SIZE/2, TILE_SIZE/3, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.fillStyle = '#0ff';
+        ctx.textAlign = 'center';
+        ctx.font = '14px monospace';
+        ctx.fillText(p.nick, p.x * TILE_SIZE + TILE_SIZE/2, p.y * TILE_SIZE + TILE_SIZE + 14);
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawMap();
+      drawPlayers();
+    }
+
+    socket.on('init', data => {
+      map = data.map;
+      players = data.players;
+      draw();
+    });
+
+    socket.on('players', data => {
+      players = data;
+      draw();
+    });
+
+    window.addEventListener('keydown', e => {
+      if(['ArrowUp','KeyW'].includes(e.code)) socket.emit('move', 'up');
+      else if(['ArrowDown','KeyS'].includes(e.code)) socket.emit('move', 'down');
+      else if(['ArrowLeft','KeyA'].includes(e.code)) socket.emit('move', 'left');
+      else if(['ArrowRight','KeyD'].includes(e.code)) socket.emit('move', 'right');
+    });
+
+    const chatDiv = document.getElementById('chat');
+    const inputChat = document.getElementById('inputChat');
+
+    inputChat.addEventListener('keydown', e => {
+      if(e.key === 'Enter' && inputChat.value.trim() !== '') {
+        socket.emit('chat', inputChat.value.trim());
+        inputChat.value = '';
+      }
+    });
+
+    socket.on('chat', data => {
+      const msgEl = document.createElement('div');
+      msgEl.textContent = `${data.nick}: ${data.msg}`;
+      chatDiv.appendChild(msgEl);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    });
+  }
+
+  main();
+</script>
+
+<script src="/socket.io/socket.io.js"></script>
+</body>
+</html>

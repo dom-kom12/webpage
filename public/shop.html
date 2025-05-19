@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Oferta usług</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    ul.product-list {
+      list-style: none;
+      padding: 0;
+      max-width: 400px;
+      width: 100%;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    ul.product-list li {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    ul.product-list li:last-child {
+      border-bottom: none;
+    }
+    label {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+    }
+    input[type="checkbox"] {
+      margin-right: 10px;
+      cursor: pointer;
+      transform: scale(1.2);
+    }
+    #total {
+      margin-top: 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+      background: #fff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      width: 400px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <ul class="product-list">
+    <li><label><input type="checkbox" value="10" /> Hosting Vercer - 10zł</label></li>
+    <li><label><input type="checkbox" value="30" /> Strona do 5 podstron (prosty styl) - 30zł</label></li>
+    <li><label><input type="checkbox" value="70" /> Strona do 10 podstron (rozbudowany styl) - 70zł</label></li>
+    <li><label><input type="checkbox" value="120" /> Strona 11-30 podstron (rozbudowany styl) - 120zł</label></li>
+    <li><label><input type="checkbox" value="40" /> 3 mies. poprawki przy crashu - 40zł</label></li>
+    <li><label><input type="checkbox" value="60" /> 6 mies. poprawki przy crashu - 60zł</label></li>
+    <li><label><input type="checkbox" value="80" /> 9 mies. poprawki przy crashu - 80zł</label></li>
+    <li><label><input type="checkbox" value="120" /> 12 mies. poprawki przy crashu - 120zł</label></li>
+    <li><label><input type="checkbox" value="100" /> 24 mies. poprawki przy crashu - 100zł (PROMOCJA DO 1.06.2025)</label></li>
+    <li><label><input type="checkbox" value="25" /> Server Minecraft + hosting - 25zł</label></li>
+  </ul>
+
+  <div id="total">Suma: 0 zł</div>
+  <main>
+    <div>
+        <ul>
+            <li>
+                <a href="Kupowanie.html"><button><strong>Kup Teraz</strong></button></a>
+            </li>
+        </ul>
+    </div>
+  </main>
+  <script>
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const totalDiv = document.getElementById('total');
+
+    function updateTotal() {
+      let sum = 0;
+      checkboxes.forEach(cb => {
+        if (cb.checked) {
+          sum += Number(cb.value);
+        }
+      });
+      totalDiv.textContent = `Suma: ${sum} zł`;
+    }
+
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', updateTotal);
+    });
+
+    updateTotal(); // wywołanie na start
+  </script>
+
+</body>
+</html>

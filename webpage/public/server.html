@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<title>Status Servera WWW</title>
+<style>
+  ul { padding-left: 0; max-width: 500px; margin: auto; font-family: sans-serif; }
+  li {
+    list-style: none;
+    margin: 20px 0;
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 8px;
+    background: #f9f9f9;
+  }
+  .custom-progress {
+    width: 100%;
+    height: 20px;
+    background: #eee;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 8px;
+    position: relative;
+  }
+  .fill {
+    width: 0;
+    height: 100%;
+    background: #4caf50;
+    transition: width 0.5s linear;
+  }
+  .percent-text {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #000;
+    line-height: 20px;
+  }
+  .done-text {
+    display: none;
+    color: green;
+    font-weight: bold;
+    margin-top: 5px;
+  }
+  .done-text.show {
+    display: block;
+  }
+  .countdown {
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: #555;
+  }
+</style>
+</head>
+<body>
+
+<h1 style="text-align:center;">Status Poszególnych Systemów</h1>
+
+<ul id="statusList">
+  <li data-start="2025-05-16T00:00:00" data-target="2025-06-01T15:30:00">
+    Status Servera Systemu - W BUDOWIE offline
+    <div class="custom-progress">
+      <div class="fill"></div>
+      <div class="percent-text">0%</div>
+    </div>
+    <div class="countdown"></div>
+    <div class="done-text">✔ Zrobione!</div>
+  </li>
+  <li data-start="2025-05-16T00:00:00" data-target="2025-06-01T15:30:00">
+    Status Servera Offline - Brak Offline
+    <div class="custom-progress">
+      <div class="fill"></div>
+      <div class="percent-text">0%</div>
+    </div>
+    <div class="countdown"></div>
+    <div class="done-text">✔ Zrobione!</div>
+  </li>
+  <li data-start="2025-05-16T00:00:00" data-target="2025-05-16T10:17:00">
+    Status Strony 404 Z błędem - Online
+    <div class="custom-progress">
+      <div class="fill"></div>
+      <div class="percent-text">0%</div>
+    </div>
+    <div class="countdown"></div>
+    <div class="done-text">✔ Zrobione!</div>
+  </li>
+  <li data-start="2025-05-17T10:25:00" data-target="2025-06-08T15:30">
+    Status Systemu Płatności
+    <div class="custom-progress">
+        <div class="fill"></div>
+        <div class="percent-text"></div>
+    </div>
+    <div class="countdown"></div>
+    <div class="done-text">✔ Zrobione!</div>
+  </li>
+  <li data-start="2025-05-17T19:49" data-target="2025-06-08T15:30">
+    Status ChatNova Chat tworzenie
+    <div class="custom-progress">
+        <div class="fill"></div>
+        <div class="percent-text"></div>
+    </div>
+    <div class="countdown"></div>
+    <div class="done-text">✔ Zrobione!</div>
+  </li>
+   <li data-start="2025-05-17T19:54" data-target="2025-06-08T15:30">
+    Status shop (sklep) tworzenie
+    <div class="custom-progress">
+        <div class="fill"></div>
+        <div class="percent-text"></div>
+    </div>
+    <div class="countdown"></div>
+    <div class="done-text">✔ Zrobione!</div>
+  </li>
+</ul>
+
+<script>
+function updateCountdownAndProgress() {
+  const now = new Date();
+  document.querySelectorAll("#statusList li").forEach(li => {
+    const start = new Date(li.dataset.start);
+    const end = new Date(li.dataset.target);
+    const fill = li.querySelector(".fill");
+    const percentText = li.querySelector(".percent-text");
+    const countdown = li.querySelector(".countdown");
+    const done = li.querySelector(".done-text");
+
+    // Oblicz procent
+    const total = end - start;
+    const elapsed = Math.max(0, now - start);
+    const percent = Math.min(100, Math.floor((elapsed / total) * 100));
+    fill.style.width = percent + "%";
+    percentText.textContent = percent + "%";
+
+    // Odliczanie
+    const remaining = end - now;
+    if (remaining <= 0) {
+      countdown.textContent = "Czas minął!";
+      fill.style.display = "none";
+      percentText.style.display = "none";
+      done.classList.add("show");
+    } else {
+      const seconds = Math.floor(remaining / 1000) % 60;
+      const minutes = Math.floor(remaining / (1000 * 60)) % 60;
+      const hours = Math.floor(remaining / (1000 * 60 * 60)) % 24;
+      const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+      const months = Math.floor(days / 30);
+      const years = Math.floor(months / 12);
+      countdown.textContent = `Pozostało: ${years} lat, ${months % 12} mies., ${days % 30} dni, ${hours}h ${minutes}m ${seconds}s`;
+    }
+  });
+}
+
+// Uruchamiaj co sekundę
+setInterval(updateCountdownAndProgress, 1000);
+updateCountdownAndProgress();
+</script>
+
+</body>
+</html>
